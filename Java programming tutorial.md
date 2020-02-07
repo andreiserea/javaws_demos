@@ -1226,6 +1226,235 @@ In addition to default methods, you can define static methods in interfaces. (A 
 
 See the TimeClient.getZoneId static method for an example.
 
+## Exceptions
+
+**What are exceptions?**
+
+An exception is an event that occurs during the execution of a program that disrupts the normal flow of instructions.
+
+When an error occurs within a method, the method creates an object and hands it off to the runtime system. The object, called an exception object, contains information about the error, including its type and the state of the program when the error occurred. Creating an exception object and handing it to the runtime system is called throwing an exception.
+
+After a method throws an exception, the runtime system attempts to find something to handle it. The set of possible "somethings" to handle the exception is the ordered list of methods that had been called to get to the method where the error occurred. The list of methods is known as the call stack (see the next figure).
+
+The runtime system searches the call stack for a method that contains a block of code that can handle the exception. This block of code is called an exception handler. The search begins with the method in which the error occurred and proceeds through the call stack in the reverse order in which the methods were called. When an appropriate handler is found, the runtime system passes the exception to the handler. An exception handler is considered appropriate if the type of the exception object thrown matches the type that can be handled by the handler.
+
+The exception handler chosen is said to catch the exception. If the runtime system exhaustively searches all the methods on the call stack without finding an appropriate exception handler, as shown in the next figure, the runtime system (and, consequently, the program) terminates.
+
+**The Catch or Specify Requirement**
+
+Code must honor the Catch or Specify Requirement. This means that code that might throw certain exceptions must be enclosed by either of the following:
+
+ - A try statement that catches the exception.
+ - A method that specifies that it can throw the exception.
+
+**The Three Kinds of Exceptions**
+
+ - *Checked exceptions* - These are exceptional conditions that a well-written application should anticipate and recover from. Checked exceptions are subject to the Catch or Specify Requirement.
+ - *Error* - These are exceptional conditions that are external to the application, and that the application usually cannot anticipate or recover from. Errors are not subject to the Catch or Specify Requirement. Errors are those exceptions indicated by Error and its subclasses.
+ - *Runtime exceptions* - These are exceptional conditions that are internal to the application, and that the application usually cannot anticipate or recover from. Runtime exceptions are not subject to the Catch or Specify Requirement. Runtime exceptions are those indicated by RuntimeException and its subclasses.
+
+**Catching and Handling Exceptions**
+
+```java
+// Note: This class will not compile yet.
+public class ListOfNumbers {
+
+    private List<Integer> list;
+    private static final int SIZE = 10;
+
+    public ListOfNumbers () {
+        list = new ArrayList<Integer>(SIZE);
+        for (int i = 0; i < SIZE; i++) {
+            list.add(new Integer(i));
+        }
+    }
+
+    public void writeList() {
+	    // The FileWriter constructor throws IOException, which must be caught.
+        PrintWriter out = new PrintWriter(new FileWriter("OutFile.txt"));
+
+        for (int i = 0; i < SIZE; i++) {
+            // The get(int) method throws IndexOutOfBoundsException, which must be caught.
+            out.println("Value at: " + i + " = " + list.get(i));
+        }
+        out.close();
+    }
+}
+```
+***The try-catch-finally block***
+The first step in constructing an exception handler is to enclose the code that might throw an exception within a try block. In general, a try block looks like the following:
+```java
+try {
+    //code
+} catch (ExceptionType name) {
+    //exception handler
+} catch (ExceptionType name) {
+    //exception handler
+} finally {
+    //always called code
+}
+```
+The segment in the example labeled code contains one or more legal lines of code that could throw an exception. 
+
+You associate exception handlers with a `try block` by providing one or more catch blocks directly after the `try block`. No code can be between the end of the try block and the beginning of the first `catch block`.
+
+Each catch block is an exception handler that handles the type of exception indicated by its argument. The argument type, `ExceptionType`, declares the type of exception that the handler can handle and must be the name of a class that inherits from the `Throwable` class. The handler can refer to the exception with name.
+
+The catch block contains code that is executed if and when the exception handler is invoked. The runtime system invokes the exception handler when the handler is the first one in the call stack whose `ExceptionType` matches the type of the exception thrown. The system considers it a match if the thrown object can legally be assigned to the exception handler's argument.
+```java
+try {
+
+} catch (IndexOutOfBoundsException e) {
+    System.err.println("Caught exception:" + e.getMessage());
+} catch (IOException e) {
+    System.err.println("Caught exception:" + e.getMessage());
+}
+```
+OR
+```java
+try {
+
+} catch (IndexOutOfBoundsException | IOException e) {
+    System.err.println("Caught exception:" + e.getMessage());
+}
+```
+**The finally block**
+The finally block always executes when the try block exits. This ensures that the finally block is executed even if an unexpected exception occurs. But finally is useful for more than just exception handling — it allows the programmer to avoid having cleanup code accidentally bypassed by a return, continue, or break. Putting cleanup code in a finally block is always a good practice, even when no exceptions are anticipated.
+
+<details><summary>The correct writeList() method</summary>
+<p>
+
+```java
+public void writeList() {
+    // The FileWriter constructor throws IOException, which must be caught.
+    PrintWriter out = null;
+    try {
+        out = new PrintWriter(new FileWriter("OutFile.txt"));
+
+        for (int i = 0; i < SIZE; i++) {
+            // The get(int) method throws IndexOutOfBoundsException, which must be caught.
+            out.println("Value at: " + i + " = " + list.get(i));
+        }
+    } catch (IndexOutOfBoundsException e) {
+        System.err.println("IndexOutOfBoundsException: " + e.getMessage());
+    } catch (IOException e) {
+        System.err.println("Caught IOException: " + e.getMessage());
+    } finally {
+    if (out != null) { 
+        System.out.println("Closing PrintWriter");
+        out.close(); 
+    } else { 
+        System.out.println("PrintWriter not open");
+    } 
+}
+```
+</p></details>
+
+**The try-with-resources Statement**
+
+The `try-with-resources` statement is a try statement that declares one or more resources. A resource is an object that must be closed after the program is finished with it. The try-with-resources statement ensures that each resource is closed at the end of the statement. Any object that implements `java.lang.AutoCloseable`, which includes all objects which implement `java.io.Closeable`, can be used as a resource.
+
+```java
+static String readFirstLineFromFile(String path) throws IOException {
+    try (BufferedReader br =
+                   new BufferedReader(new FileReader(path))) {
+        return br.readLine();
+    }
+}
+```
+In this example, the resource declared in the try-with-resources statement is a BufferedReader. The declaration statement appears within parentheses immediately after the `try` keyword. The class `BufferedReader`, in Java SE 7 and later, implements the interface `java.lang.AutoCloseable`. Because the BufferedReader instance is declared in a try-with-resource statement, it will be closed regardless of whether the try statement completes normally or abruptly (as a result of the method BufferedReader.readLine throwing an IOException).
+
+Prior to Java 7 & try-with-resources, the above code would have to be written like this:
+```java
+static String readFirstLineFromFileWithFinallyBlock(String path)
+                                                     throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader(path));
+    try {
+        return br.readLine();
+    } finally {
+        if (br != null) br.close();
+    }
+}
+```
+
+But the 2 code fragments, although they may appear identical, they are not!
+
+If the methods readLine and close both throw exceptions, then the method readFirstLineFromFileWithFinallyBlock throws the exception thrown from the finally block; the exception thrown from the try block is suppressed. In contrast, in the example readFirstLineFromFile, if exceptions are thrown from both the try block and the try-with-resources statement, then the method readFirstLineFromFile throws the exception thrown from the try block; the exception thrown from the try-with-resources block is suppressed. In Java SE 7 and later, you can retrieve suppressed exceptions
+
+Exercise: Let's see suppressed exceptions in action!
+<details><summary>More than one resource?</summary>
+<p>
+```java
+public static void writeToFileZipFileContents(String zipFileName,
+                                           String outputFileName)
+                                           throws java.io.IOException {
+
+    java.nio.charset.Charset charset =
+         java.nio.charset.StandardCharsets.US_ASCII;
+    java.nio.file.Path outputFilePath =
+         java.nio.file.Paths.get(outputFileName);
+
+    // Open zip file and create output file with 
+    // try-with-resources statement
+
+    try (
+        java.util.zip.ZipFile zf =
+             new java.util.zip.ZipFile(zipFileName);
+        java.io.BufferedWriter writer = 
+            java.nio.file.Files.newBufferedWriter(outputFilePath, charset)
+    ) {
+        // Enumerate each entry
+        for (java.util.Enumeration entries =
+                                zf.entries(); entries.hasMoreElements();) {
+            // Get the entry name and write it to the output file
+            String newLine = System.getProperty("line.separator");
+            String zipEntryName =
+                 ((java.util.zip.ZipEntry)entries.nextElement()).getName() +
+                 newLine;
+            writer.write(zipEntryName, 0, zipEntryName.length());
+        }
+    }
+}```
+In this example, the try-with-resources statement contains two declarations that are separated by a semicolon: ZipFile and BufferedWriter. When the block of code that directly follows it terminates, either normally or because of an exception, the close methods of the BufferedWriter and ZipFile objects are automatically called in this order. Note that the close methods of resources are called in the opposite order of their creation.
+
+</p></details>
+
+>Note: A try-with-resources statement can have catch and finally blocks just like an ordinary try statement. In a try-with-resources statement, any catch or finally block is run after the resources declared have been closed.
+
+**Suppressed exceptions**
+An exception can be thrown from the block of code associated with the try-with-resources statement. In the example writeToFileZipFileContents, an exception can be thrown from the try block, and up to two exceptions can be thrown from the try-with-resources statement when it tries to close the ZipFile and BufferedWriter objects. If an exception is thrown from the try block and one or more exceptions are thrown from the try-with-resources statement, then those exceptions thrown from the try-with-resources statement are suppressed, and the exception thrown by the block is the one that is thrown by the writeToFileZipFileContents method. You can retrieve these suppressed exceptions by calling the Throwable.getSuppressed method from the exception thrown by the try block.
+
+**Specifying the Exceptions Thrown by a Method**
+
+If the writeList method doesn't catch the checked exceptions that can occur within it, the writeList method must specify that it can throw these exceptions.
+```java
+public void writeList() throws IOException {
+    PrintWriter out = new PrintWriter(new FileWriter("OutFile.txt"));
+    for (int i = 0; i < SIZE; i++) {
+        out.println("Value at: " + i + " = " + list.get(i));
+    }
+    out.close();
+}
+```
+
+**How to throw exceptions**
+```java
+public Object pop() {
+    Object obj;
+
+    if (size == 0) {
+        throw new EmptyStackException();
+    }
+
+    obj = objectAt(size - 1);
+    setObjectAt(size - 1, null);
+    size--;
+    return obj;
+}
+```
+
+
+
 ### Strong on encapsulation
 
 >The single most important factor that distinguishes a well-designed component from a poorly designed one is the degree to which the component hides its internal data and other implementation details from other components. A well-designed component hides all its implementation details, cleanly separating its API from its implementation. Components then communicate only through their APIs and are oblivious to each others’ inner workings. This concept, known as information hiding or encapsulation, is a fundamental tenet of software design
