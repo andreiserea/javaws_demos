@@ -17,7 +17,7 @@ public abstract class FileQuery implements Query {
     protected String queryAsString;
     protected Object[] params;
 
-    public FileQuery(FileStorageConnection connection, String queryAsString, Object[] params) {
+    private FileQuery(FileStorageConnection connection, String queryAsString, Object[] params) {
         this.connection = connection;
         this.queryAsString = queryAsString;
         this.params = params;
@@ -33,4 +33,42 @@ public abstract class FileQuery implements Query {
             throw new IllegalArgumentException("Not a valid query: " + queryAsString);
         }
     }
+
+    private static class ReadFileQuery extends FileQuery {
+        public ReadFileQuery(FileStorageConnection connection, String queryAsString, Object[] params) {
+            super(connection, queryAsString, params);
+        }
+
+        public byte[] execute() {
+            try {
+                return Files.readAllBytes(Paths.get(connection.getDirPath(), this.queryAsString.split("/")[1]));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+    }
+
+    private static class WriteFileQuery extends FileQuery {
+        public WriteFileQuery(FileStorageConnection connection, String queryAsString, Object[] params) {
+            super(connection, queryAsString, params);
+        }
+
+        public byte[] execute() {
+            Path path = Paths.get(this.connection.getDirPath(), this.queryAsString.split("/")[1]);
+            File f = path.toFile();
+            try(BufferedWriter fw = new BufferedWriter(new FileWriter(f, true))) {
+                for(int i = 0; i < params.length; i++) {
+                    if (f.length() != 0 || i > 0) {
+                        fw.newLine();
+                    }
+                    fw.write(params[i].toString());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
 }
