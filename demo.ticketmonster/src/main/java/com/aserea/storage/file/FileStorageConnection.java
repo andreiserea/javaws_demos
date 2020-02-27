@@ -18,6 +18,6 @@ public class FileStorageConnection implements StorageEngineConnection {
 
     @Override
     public Query createQuery(String queryAsString, Object ... args) {
-        return new FileQuery(this, queryAsString, args);
+        return FileQuery.getInstance(this, queryAsString, args);
     }
 }

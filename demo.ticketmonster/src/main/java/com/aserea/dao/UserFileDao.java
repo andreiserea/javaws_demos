@@ -5,6 +5,7 @@ import com.aserea.exceptions.EntityNotUniqueException;
 import com.aserea.model.User;
 import com.aserea.storage.Query;
 import com.aserea.storage.file.FileStorageConnection;
+import com.aserea.storage.file.FileStorageEngine;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,15 +23,13 @@ public class UserFileDao implements EntityDao<User, Integer> {
     public User get(Integer id) {
         Query query = connection.createQuery("r/users.txt");
         byte[] bytes = query.execute();
-        List<User> user = Arrays.stream(new String(bytes).split("\n")).map(User::fromString).filter(
+        List<User> users = Arrays.stream(new String(bytes).split("\n")).map(User::fromString).filter(
                 u -> u.getId() == id).collect(
                 Collectors.toList());
-        if (user.size() == 1) {
-            return user.get(0);
-        } else if (user.size() == 0) {
-            throw new EntityNotFoundException("User with id " + id + " was not found!");
+        if (users.size() >= 1) {
+            return users.get(users.size() - 1);
         } else {
-            throw new EntityNotUniqueException("There are " + user.size() + " users with the same id " + id);
+            throw new EntityNotFoundException("User with id " + id + " was not found!");
         }
     }
 
@@ -48,6 +47,7 @@ public class UserFileDao implements EntityDao<User, Integer> {
 
     @Override
     public void delete(Integer id) {
-
+        // TODO: implement in session 3
     }
+
 }

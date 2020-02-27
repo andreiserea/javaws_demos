@@ -11,11 +11,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.naming.OperationNotSupportedException;
 
-public class FileQuery implements Query {
+public abstract class FileQuery implements Query {
 
-    private FileStorageConnection connection;
-    private String queryAsString;
-    private Object[] params;
+    protected FileStorageConnection connection;
+    protected String queryAsString;
+    protected Object[] params;
 
     public FileQuery(FileStorageConnection connection, String queryAsString, Object[] params) {
         this.connection = connection;
@@ -23,41 +23,14 @@ public class FileQuery implements Query {
         this.params = params;
     }
 
-    @Override
-    public byte[] execute() {
-        if (this.queryAsString.startsWith("r")) {
-            return this.executeRead();
-        } else if (this.queryAsString.startsWith("w")) {
-            this.executeWrite();
-            return null;
+    public static FileQuery getInstance(FileStorageConnection connection, String queryAsString, Object[] params) {
+        if (queryAsString.startsWith("r")) {
+            return new ReadFileQuery(connection, queryAsString, params);
+        } else if (queryAsString.startsWith("w")) {
+            return new WriteFileQuery(connection, queryAsString, params);
         } else {
             // should be checked at construction time - violates object contract
-            throw new IllegalArgumentException("Not a valid query: " + this.queryAsString);
-        }
-
-    }
-
-    private byte[] executeRead() {
-        try {
-            return Files.readAllBytes(Paths.get(connection.getDirPath(), this.queryAsString.split("/")[1]));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private void executeWrite() {
-        Path path = Paths.get(connection.getDirPath(), this.queryAsString.split("/")[1]);
-        File f = path.toFile();
-        try(BufferedWriter fw = new BufferedWriter(new FileWriter(f, true))) {
-            for(int i = 0; i < params.length; i++) {
-                if (f.length() != 0 || i > 0) {
-                    fw.newLine();
-                }
-                fw.write(params[i].toString());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            throw new IllegalArgumentException("Not a valid query: " + queryAsString);
         }
     }
 }

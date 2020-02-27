@@ -1,4 +1,4 @@
-gitpackage com.aserea.storage.file;
+package com.aserea.storage.file;
 
 import com.aserea.storage.StorageEngine;
 import com.aserea.storage.StorageEngineConnection;
