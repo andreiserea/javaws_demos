@@ -19,6 +19,7 @@ public class UserFileDaoTest {
         UserFileDao userDao = new UserFileDao(fileStorageEngine.getConnection());
         users.forEach(userDao::create);
         userDao.delete(1);
+        userDao.get(2);
         userDao.get(1);
     }
 }

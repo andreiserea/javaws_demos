@@ -4,6 +4,7 @@ import com.aserea.exceptions.EntityNotFoundException;
 import com.aserea.exceptions.EntityNotUniqueException;
 import com.aserea.model.User;
 import com.aserea.storage.Query;
+import com.aserea.storage.file.FileQuery;
 import com.aserea.storage.file.FileStorageConnection;
 import com.aserea.storage.file.FileStorageEngine;
 
@@ -23,11 +24,20 @@ public class UserFileDao implements EntityDao<User, Integer> {
     public User get(Integer id) {
         Query query = connection.createQuery("r/users.txt");
         byte[] bytes = query.execute();
-        List<User> users = Arrays.stream(new String(bytes).split("\n")).map(User::fromString).filter(
-                u -> u.getId() == id).collect(
-                Collectors.toList());
-        if (users.size() >= 1) {
-            return users.get(users.size() - 1);
+        User user = null;
+        String[] entries = new String(bytes).split("\n");
+        for(int i = 0; i < entries.length; i++) {
+            if (entries[i].equals(FileQuery.TOMBSTONE)) {
+                if (Integer.valueOf(entries[++i]) == id) {
+                    user = null;
+                }
+            } else {
+                User temp = User.fromString(entries[i]);
+                user = temp.getId().equals(id) ? temp : user;
+            }
+        }
+        if (user != null) {
+            return user;
         } else {
             throw new EntityNotFoundException("User with id " + id + " was not found!");
         }
