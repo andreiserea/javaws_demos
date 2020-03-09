@@ -35,19 +35,23 @@ public class UserFileDao implements EntityDao<User, Integer> {
 
     @Override
     public void create(User entity) {
+        upsert(entity);
+    }
+
+    private void upsert(User entity) {
         Query query = connection.createQuery("w/users.txt", entity);
         query.execute();
     }
 
     @Override
     public void update(User entity) {
-        Query query = connection.createQuery("w/users.txt", entity);
-        query.execute();
+        upsert(entity);
     }
 
     @Override
     public void delete(Integer id) {
-        // TODO: implement in session 3
+        Query query = connection.createQuery("d/users.txt", id);
+        query.execute();
     }
 
 }

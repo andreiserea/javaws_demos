@@ -9,9 +9,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import javax.naming.OperationNotSupportedException;
 
 public abstract class FileQuery implements Query {
+
+    public final static String TOMBSTONE = "T";
 
     protected FileStorageConnection connection;
     protected String queryAsString;
@@ -28,6 +31,8 @@ public abstract class FileQuery implements Query {
             return new ReadFileQuery(connection, queryAsString, params);
         } else if (queryAsString.startsWith("w")) {
             return new WriteFileQuery(connection, queryAsString, params);
+        } else if (queryAsString.startsWith("d")) {
+            return new DeleteFileQuery(connection, queryAsString, params);
         } else {
             // should be checked at construction time - violates object contract
             throw new IllegalArgumentException("Not a valid query: " + queryAsString);
@@ -71,4 +76,18 @@ public abstract class FileQuery implements Query {
         }
     }
 
+    private static class DeleteFileQuery extends WriteFileQuery {
+
+        public DeleteFileQuery(FileStorageConnection connection, String queryAsString, Object[] params) {
+            super(connection, queryAsString, concat(new String[] {TOMBSTONE}, params));
+        }
+
+    }
+
+    private static Object[] concat(Object[] arr1, Object[] arr2) {
+        Object[] result = new Object[arr1.length + arr2.length];
+        System.arraycopy(arr1, 0, result, 0, arr1.length);
+        System.arraycopy(arr2, 0, result, arr1.length, arr2.length);
+        return result;
+    }
 }
