@@ -9,6 +9,7 @@ import com.aserea.storage.file.FileStorageConnection;
 import com.aserea.storage.file.FileStorageEngine;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
@@ -24,16 +25,27 @@ public class UserFileDaoTest {
      * Good Test only tests UserFileDao.delete method in isolation.
      */
     public void test_deleteUser() {
-        UserFileDao userDao = new UserFileDao(new FileStorageConnectionTest("."));
+        FileStorageConnection connection = Mockito.mock(FileStorageConnection.class);
+        FileQuery query = Mockito.mock(FileQuery.class);
+        Mockito.when(connection.createQuery(Mockito.any(), Mockito.any())).thenReturn(query);
+
+        UserFileDao userDao = new UserFileDao(connection);
 
         userDao.delete(1);
+
+        ArgumentCaptor<String> queryString = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Integer> queryArgs = ArgumentCaptor.forClass(Integer.class);
+        Mockito.verify(connection).createQuery(queryString.capture(), queryArgs.capture());
+        Assert.assertTrue(queryString.getValue().startsWith("d/"));
+        Assert.assertTrue(queryArgs.getValue().equals(1));
+        Mockito.verify(query).execute();
     }
 
     @Test(expected = EntityNotFoundException.class)
     public void test_getUser() {
         FileStorageConnection connection = Mockito.mock(FileStorageConnection.class);
         FileQuery query = Mockito.mock(FileQuery.class);
-        Mockito.when(connection.createQuery(Mockito.any())).thenReturn(query);;
+        Mockito.when(connection.createQuery(Mockito.any())).thenReturn(query);
         Mockito.when(query.execute()).thenReturn(
                 (u1.toString() + "\n" + u2.toString() + "\n" + FileQuery.TOMBSTONE + "\n" + 1).getBytes());
 
