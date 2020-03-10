@@ -9,6 +9,7 @@ import com.aserea.storage.file.FileStorageConnection;
 import com.aserea.storage.file.FileStorageEngine;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +31,14 @@ public class UserFileDaoTest {
 
     @Test(expected = EntityNotFoundException.class)
     public void test_getUser() {
-        UserFileDao userDao = new UserFileDao(new FileStorageConnectionTest("."));
+        FileStorageConnection connection = Mockito.mock(FileStorageConnection.class);
+        FileQuery query = Mockito.mock(FileQuery.class);
+        Mockito.when(connection.createQuery(Mockito.any())).thenReturn(query);;
+        Mockito.when(query.execute()).thenReturn(
+                (u1.toString() + "\n" + u2.toString() + "\n" + FileQuery.TOMBSTONE + "\n" + 1).getBytes());
+
+        UserFileDao userDao = new UserFileDao(connection);
+
 
         User u = userDao.get(2);
         Assert.assertEquals(u2, u);
