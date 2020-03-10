@@ -15,6 +15,9 @@ import java.util.List;
 
 public class UserFileDaoTest {
 
+    private static final User u1 = new User(1, "andrei", "aserea@fitbit.com", "Andrei", "Serea", "Home");
+    private static final User u2 = new User(2, "ion", "ion@fitbit.com", "Ion", "Popescu", "Home");
+
     @Test
     /**
      * Good Test only tests UserFileDao.delete method in isolation.
@@ -25,6 +28,14 @@ public class UserFileDaoTest {
         userDao.delete(1);
     }
 
+    @Test(expected = EntityNotFoundException.class)
+    public void test_getUser() {
+        UserFileDao userDao = new UserFileDao(new FileStorageConnectionTest("."));
+
+        User u = userDao.get(2);
+        Assert.assertEquals(u2, u);
+        userDao.get(1);
+    }
 
     /**
      *
@@ -51,9 +62,7 @@ public class UserFileDaoTest {
 
         @Override
         public byte[] execute() {
-            return (new User(1, "andrei", "aserea@fitbit.com", "Andrei", "Serea", "Home").toString() +
-                    "\n" + new User(2, "ion", "ion@fitbit.com", "Ion", "Popescu", "Home").toString() +
-                    FileQuery.TOMBSTONE + "\n" + 1).getBytes();
+            return (u1.toString() + "\n" + u2.toString() + "\n" + FileQuery.TOMBSTONE + "\n" + 1).getBytes();
         }
     }
 
