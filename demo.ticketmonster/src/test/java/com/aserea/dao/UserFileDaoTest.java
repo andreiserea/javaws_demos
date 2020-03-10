@@ -1,5 +1,6 @@
 package com.aserea.dao;
 
+import com.aserea.exceptions.EntityNotFoundException;
 import com.aserea.model.User;
 import com.aserea.storage.file.FileStorageEngine;
 import org.junit.Test;
@@ -9,7 +10,12 @@ import java.util.List;
 
 public class UserFileDaoTest {
 
-    @Test
+    @Test(expected = EntityNotFoundException.class)
+    /**
+     * This test is wrong because it actually does not isolate methods.
+     * This test can fail because of any number of bugs in multiple methods: UserFileDao.delete/UserFileDao.get,
+     * FileStorageEngine or FileQuery
+     */
     public void test_deleteUser() {
         List<User> users = Arrays.asList(
                 new User(1, "andrei", "aserea@fitbit.com", "Andrei", "Serea", "Home"),
@@ -22,4 +28,5 @@ public class UserFileDaoTest {
         userDao.get(2);
         userDao.get(1);
     }
+
 }
